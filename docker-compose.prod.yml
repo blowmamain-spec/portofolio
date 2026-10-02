@@ -6,7 +6,10 @@
 #
 # One-time setup on the homeserver, see docs/DEPLOYMENT.md:
 #   docker network create edge
-#   cp .env.example .env   # fill in DOMAIN, DB_*, CLOUDFLARE_TUNNEL_TOKEN
+#   cp .env.example .env   # fill in DOMAIN, DB_*
+#   # create the Cloudflare Tunnel via `cloudflared` CLI (./cloudflared/),
+#   # see docs/DEPLOYMENT.md — this avoids the Zero Trust dashboard,
+#   # which asks for a payment method even on the free tier
 #   docker compose -f docker-compose.prod.yml up -d --build
 
 services:
@@ -23,12 +26,17 @@ services:
     networks:
       - edge
 
+  # Locally-managed tunnel (cert.pem + <tunnel-id>.json + config.yml live
+  # in ./cloudflared, created once via the cloudflared CLI — see
+  # docs/DEPLOYMENT.md). Deliberately not the dashboard/token-based setup:
+  # that requires activating Cloudflare Zero Trust, which asks for a
+  # payment method even on the free tier.
   cloudflared:
     image: cloudflare/cloudflared:latest
     restart: unless-stopped
     command: tunnel run
-    environment:
-      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    volumes:
+      - ./cloudflared:/root/.cloudflared:ro
     networks:
       - edge
     depends_on:
