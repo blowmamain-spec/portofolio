@@ -36,7 +36,9 @@ services:
     restart: unless-stopped
     command: tunnel run
     volumes:
-      - ./cloudflared:/root/.cloudflared:ro
+      # /home/nonroot, not /root — the cloudflared image runs as the
+      # "nonroot" user. See docs/DEPLOYMENT.md.
+      - ./cloudflared:/home/nonroot/.cloudflared:ro
     networks:
       - edge
     depends_on:
