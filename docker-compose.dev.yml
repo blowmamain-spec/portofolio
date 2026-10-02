@@ -1,0 +1,66 @@
+# Local development stack. Code is bind-mounted for hot-reload; services
+# are reachable directly on localhost (no reverse proxy needed locally).
+#
+# Usage:
+#   cp backend/.env.example backend/.env
+#   cp frontend/.env.example frontend/.env
+#   docker compose -f docker-compose.dev.yml up --build
+#
+# Frontend: http://localhost:5173
+# Backend:  http://localhost:8000
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: portofolio
+      POSTGRES_USER: portofolio
+      POSTGRES_PASSWORD: portofolio_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data-dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portofolio"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile.dev
+    volumes:
+      - ./backend:/var/www/html
+    ports:
+      - "8000:8000"
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: portofolio
+      DB_USERNAME: portofolio
+      DB_PASSWORD: portofolio_dev
+      FRONTEND_URL: http://localhost:5173
+    command: sh -c "composer install && php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile.dev
+    volumes:
+      - ./frontend:/app
+      - frontend-node-modules:/app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:8000
+    command: sh -c "npm install && npm run dev -- --host"
+    depends_on:
+      - backend
+
+volumes:
+  db-data-dev:
+  frontend-node-modules:

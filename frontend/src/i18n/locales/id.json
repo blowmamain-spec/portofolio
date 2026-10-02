@@ -1,0 +1,41 @@
+{
+  "nav": {
+    "about": "Tentang",
+    "skills": "Keahlian",
+    "projects": "Proyek",
+    "experience": "Pengalaman",
+    "blog": "Blog",
+    "contact": "Kontak"
+  },
+  "hero": {
+    "greeting": "Halo, saya",
+    "name": "Nabil",
+    "tagline": "Fullstack Developer yang lagi mendalami Cybersecurity",
+    "cta": "Lihat Proyek"
+  },
+  "about": {
+    "title": "Tentang Saya",
+    "body": "Konten ini masih placeholder — akan diisi bio asli di fase konten."
+  },
+  "skills": {
+    "title": "Keahlian"
+  },
+  "projects": {
+    "title": "Proyek",
+    "empty": "Belum ada proyek — akan diisi lewat admin panel setelah backend CRUD-nya jadi (Fase 1)."
+  },
+  "experience": {
+    "title": "Pengalaman"
+  },
+  "blog": {
+    "title": "Blog",
+    "empty": "Belum ada tulisan."
+  },
+  "contact": {
+    "title": "Kontak",
+    "body": "Form kontak / link sosial media akan ditambahkan di sini."
+  },
+  "footer": {
+    "rights": "Hak cipta dilindungi."
+  }
+}
