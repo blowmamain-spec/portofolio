@@ -1,0 +1,41 @@
+{
+  "nav": {
+    "about": "About",
+    "skills": "Skills",
+    "projects": "Projects",
+    "experience": "Experience",
+    "blog": "Blog",
+    "contact": "Contact"
+  },
+  "hero": {
+    "greeting": "Hi, I'm",
+    "name": "Nabil",
+    "tagline": "Fullstack Developer currently diving into Cybersecurity",
+    "cta": "View Projects"
+  },
+  "about": {
+    "title": "About Me",
+    "body": "This content is a placeholder — real bio comes in the content phase."
+  },
+  "skills": {
+    "title": "Skills"
+  },
+  "projects": {
+    "title": "Projects",
+    "empty": "No projects yet — will be added via the admin panel once the backend CRUD is live (Phase 1)."
+  },
+  "experience": {
+    "title": "Experience"
+  },
+  "blog": {
+    "title": "Blog",
+    "empty": "No posts yet."
+  },
+  "contact": {
+    "title": "Contact",
+    "body": "Contact form / social links will be added here."
+  },
+  "footer": {
+    "rights": "All rights reserved."
+  }
+}
