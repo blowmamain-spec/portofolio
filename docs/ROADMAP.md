@@ -67,4 +67,4 @@ Dipetakan dari rencana belajar pribadi "Laravel + PostgreSQL + Frontend" (PHP/La
 ---
 
 ## Rencana lanjutan (di luar 16 minggu, "nanti dulu")
-- Internal apps lain (todo list, dll) di `app.domainmu.com` — arsitektur udah disiapkan (lihat `docs/ARCHITECTURE.md`), tinggal tambah service baru pas waktunya.
+- Internal apps lain (todo list, dll) di `app.nfab.my.id` — arsitektur udah disiapkan (lihat `docs/ARCHITECTURE.md`), tinggal tambah service baru pas waktunya.

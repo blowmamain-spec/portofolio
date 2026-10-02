@@ -24,9 +24,9 @@ Cloudflare (DNS + edge TLS)
 cloudflared (tunnel keluar dari homeserver, nggak ada port yang dibuka)
    │
 Traefik (routing by Host header, HTTP biasa karena TLS udah kelar di edge)
-   ├── domainmu.com      → frontend (nginx + static React build)
-   ├── api.domainmu.com  → backend (nginx + php-fpm, satu container)
-   └── (nanti) app.domainmu.com → service lain, tinggal nambah di compose
+   ├── nfab.my.id      → frontend (nginx + static React build)
+   ├── api.nfab.my.id  → backend (nginx + php-fpm, satu container)
+   └── (nanti) app.nfab.my.id → service lain, tinggal nambah di compose
                 │
          PostgreSQL (volume persistent)
                 │
