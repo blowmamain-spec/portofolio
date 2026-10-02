@@ -1,0 +1,4 @@
+# Root-level compose env (secrets) and runtime data — backend/ and
+# frontend/ have their own .gitignore for their own concerns.
+.env
+backups/
