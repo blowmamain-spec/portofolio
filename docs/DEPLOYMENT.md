@@ -77,9 +77,12 @@ Semua command di bawah dijalanin di dalam folder `portofolio` (hasil clone step 
 
 ```bash
 mkdir -p cloudflared
+chmod 777 cloudflared
 ```
 
 > **Catatan path:** image resmi `cloudflared` jalan sebagai user `nonroot`, home directory-nya `/home/nonroot` — **bukan** `/root`. Semua command di bawah mount ke `/home/nonroot/.cloudflared`. Kalau salah mount ke `/root/.cloudflared`, filenya ketulis di dalam container doang dan ikut hilang pas container `--rm` keluar (cert "berhasil login" tapi nggak pernah nyampe ke host).
+>
+> **Catatan permission:** `chmod 777` di atas disengaja, bukan typo. UID user `nonroot` di dalam image beda dari user manapun di host (root termasuk), jadi folder `cloudflared/` perlu writable buat semua biar container-nya bisa nulis `cert.pem`/credential ke situ. Ini folder lokal kecil yang isinya cuma dibaca proses `cloudflared`, jadi risikonya minim — tapi kalau mau lebih ketat, cek UID user `nonroot` di image (`docker run --rm cloudflare/cloudflared:latest id`) terus `chown` folder ini ke UID itu sebagai gantinya.
 
 **3.1 Login** — ini bakal nge-print sebuah URL:
 ```bash
