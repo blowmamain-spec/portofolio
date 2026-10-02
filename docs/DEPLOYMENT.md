@@ -79,29 +79,34 @@ Semua command di bawah dijalanin di dalam folder `portofolio` (hasil clone step 
 mkdir -p cloudflared
 ```
 
+> **Catatan path:** image resmi `cloudflared` jalan sebagai user `nonroot`, home directory-nya `/home/nonroot` — **bukan** `/root`. Semua command di bawah mount ke `/home/nonroot/.cloudflared`. Kalau salah mount ke `/root/.cloudflared`, filenya ketulis di dalam container doang dan ikut hilang pas container `--rm` keluar (cert "berhasil login" tapi nggak pernah nyampe ke host).
+
 **3.1 Login** — ini bakal nge-print sebuah URL:
 ```bash
-docker run --rm -it -v "$PWD/cloudflared":/root/.cloudflared cloudflare/cloudflared:latest tunnel login
+docker run --rm -it -v "$PWD/cloudflared":/home/nonroot/.cloudflared cloudflare/cloudflared:latest tunnel login
 ```
-Buka URL itu di browser manapun (HP/laptop, nggak harus di homeserver), login ke akun Cloudflare yang domainnya udah di-add (step 1), pilih `nfab.my.id`, klik **Authorize**. Setelah itu `cloudflared/cert.pem` otomatis muncul.
+Buka URL itu di browser manapun (HP/laptop, nggak harus di homeserver), login ke akun Cloudflare yang domainnya udah di-add (step 1), pilih `nfab.my.id`, klik **Authorize**. Tunggu sampai terminal nampilin "You have successfully logged in" dan command-nya berhenti sendiri (jangan Ctrl+C). Cek hasilnya:
+```bash
+ls -la cloudflared/   # harus ada cert.pem
+```
 
 **3.2 Bikin tunnel:**
 ```bash
-docker run --rm -v "$PWD/cloudflared":/root/.cloudflared cloudflare/cloudflared:latest tunnel create nfab-homeserver
+docker run --rm -v "$PWD/cloudflared":/home/nonroot/.cloudflared cloudflare/cloudflared:latest tunnel create nfab-homeserver
 ```
 Catat **Tunnel ID** yang muncul di output (bentuknya UUID, misal `a1b2c3d4-...`). File credential `<tunnel-id>.json` otomatis tersimpan di `cloudflared/`.
 
 **3.3 Arahin DNS ke tunnel ini:**
 ```bash
-docker run --rm -v "$PWD/cloudflared":/root/.cloudflared cloudflare/cloudflared:latest tunnel route dns nfab-homeserver nfab.my.id
-docker run --rm -v "$PWD/cloudflared":/root/.cloudflared cloudflare/cloudflared:latest tunnel route dns nfab-homeserver api.nfab.my.id
+docker run --rm -v "$PWD/cloudflared":/home/nonroot/.cloudflared cloudflare/cloudflared:latest tunnel route dns nfab-homeserver nfab.my.id
+docker run --rm -v "$PWD/cloudflared":/home/nonroot/.cloudflared cloudflare/cloudflared:latest tunnel route dns nfab-homeserver api.nfab.my.id
 ```
 Ini otomatis bikin CNAME record di Cloudflare, nggak perlu ke dashboard sama sekali.
 
 **3.4 Bikin config** — buat file `cloudflared/config.yml` isinya (ganti `<TUNNEL_ID>` dengan ID dari step 3.2):
 ```yaml
 tunnel: <TUNNEL_ID>
-credentials-file: /root/.cloudflared/<TUNNEL_ID>.json
+credentials-file: /home/nonroot/.cloudflared/<TUNNEL_ID>.json
 
 ingress:
   - hostname: nfab.my.id
@@ -159,7 +164,7 @@ docker compose -f docker-compose.prod.yml exec -T db psql -U $DB_USERNAME -d $DB
 ```
 
 ## Menambah app baru nanti (misal todo list di app.nfab.my.id)
-1. `docker run --rm -v "$PWD/cloudflared":/root/.cloudflared cloudflare/cloudflared:latest tunnel route dns nfab-homeserver app.nfab.my.id`
+1. `docker run --rm -v "$PWD/cloudflared":/home/nonroot/.cloudflared cloudflare/cloudflared:latest tunnel route dns nfab-homeserver app.nfab.my.id`
 2. Tambah satu baris hostname baru di `cloudflared/config.yml` (sebelum baris `http_status:404`), lalu `docker compose -f docker-compose.prod.yml restart cloudflared`
 3. Tambah service baru di compose (bisa di file ini atau compose terpisah yang nyambung ke network `edge` yang sama), dengan label Traefik:
    ```yaml
@@ -174,6 +179,7 @@ docker compose -f docker-compose.prod.yml exec -T db psql -U $DB_USERNAME -d $DB
 ## Troubleshooting umum
 - **`docker network create edge` bilang network udah ada** — aman, berarti udah pernah dibikin sebelumnya, lanjut aja.
 - **`tunnel login` kebuka tapi stuck nunggu** — pastikan browser yang dipakai authorize itu login ke akun Cloudflare yang sama dengan yang nambahin domain di step 1.
-- **Tunnel nggak connect** (`cloudflared` logs nggak nunjukin `Registered tunnel connection`) — cek `config.yml` path `credentials-file`-nya bener (`/root/.cloudflared/<TUNNEL_ID>.json`, bukan path di host), dan `docker compose ps` pastiin container `cloudflared` statusnya `Up`, bukan restart loop.
+- **Tunnel nggak connect** (`cloudflared` logs nggak nunjukin `Registered tunnel connection`) — cek `config.yml` path `credentials-file`-nya bener (`/home/nonroot/.cloudflared/<TUNNEL_ID>.json`, bukan path di host), dan `docker compose ps` pastiin container `cloudflared` statusnya `Up`, bukan restart loop.
+- **`ls cloudflared/` kosong abis `tunnel login`** — kemungkinan besar mount path salah (harus `/home/nonroot/.cloudflared`, bukan `/root/.cloudflared` — image `cloudflared` jalan sebagai user `nonroot`) atau command keburu di-Ctrl+C sebelum "You have successfully logged in" muncul. Ulangi step 3.1.
 - **`https://nfab.my.id` kasih error 502/503** — tunnel-nya nyambung tapi Traefik/frontend container belum ready. Cek `docker compose ps` semua service status `Up`, dan `docker compose logs frontend`.
 - **`/api/health` CORS error dari browser console** — pastikan `FRONTEND_URL` di `backend/.env` persis `https://nfab.my.id` (tanpa trailing slash), lalu `docker compose up -d --build backend` ulang.
