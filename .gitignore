@@ -2,3 +2,7 @@
 # frontend/ have their own .gitignore for their own concerns.
 .env
 backups/
+
+# Cloudflare Tunnel credentials (cert.pem, <tunnel-id>.json) — secrets,
+# created once on the homeserver via the cloudflared CLI.
+cloudflared/
