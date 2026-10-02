@@ -34,7 +34,7 @@ services:
   cloudflared:
     image: cloudflare/cloudflared:latest
     restart: unless-stopped
-    command: tunnel run
+    command: tunnel --config /home/nonroot/.cloudflared/config.yml run
     volumes:
       # /home/nonroot, not /root — the cloudflared image runs as the
       # "nonroot" user. See docs/DEPLOYMENT.md.
