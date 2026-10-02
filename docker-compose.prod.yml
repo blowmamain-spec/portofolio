@@ -35,6 +35,13 @@ services:
     image: cloudflare/cloudflared:latest
     restart: unless-stopped
     command: tunnel --config /home/nonroot/.cloudflared/config.yml run
+    # Docker's embedded resolver (127.0.0.11) sometimes can't reach the
+    # host's upstream DNS depending on the host's network setup (common
+    # with systemd-resolved). Point straight at a public resolver so
+    # cloudflared can always look up Cloudflare's own hostnames.
+    dns:
+      - 1.1.1.1
+      - 1.0.0.1
     volumes:
       # /home/nonroot, not /root — the cloudflared image runs as the
       # "nonroot" user. See docs/DEPLOYMENT.md.
