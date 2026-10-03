@@ -13,16 +13,16 @@
 #   docker compose -f docker-compose.prod.yml up -d --build
 
 services:
+  # v3.2 (and everything before v3.6.1) ships a Docker client that
+  # hardcodes API version 1.24, which newer Docker Engine releases
+  # (29.x+) reject outright with "client version 1.24 is too old".
+  # Traefik fixed this in v3.6.1 by negotiating the API version instead
+  # of hardcoding it — pin to v3.6, not the DOCKER_API_VERSION env var
+  # (Traefik's docker provider doesn't read it; that was tried first and
+  # didn't help). See https://github.com/appwrite/appwrite/issues/10801.
   traefik:
-    image: traefik:v3.2
+    image: traefik:v3.6
     restart: unless-stopped
-    environment:
-      # Traefik's bundled Docker client defaults to an old API version
-      # (1.24) when it can't auto-negotiate with the daemon, which newer
-      # Docker Engine releases reject outright ("client version 1.24 is
-      # too old"). Force a modern version so the docker provider can
-      # actually talk to the socket.
-      - DOCKER_API_VERSION=1.41
     command:
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
