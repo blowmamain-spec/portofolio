@@ -187,6 +187,17 @@ docker compose -f docker-compose.prod.yml exec -T db psql -U $DB_USERNAME -d $DB
 - **`permission denied` nulis `cert.pem` atau `<TUNNEL_ID>.json`** — folder `cloudflared/` di host belum writable buat UID `nonroot` di dalam container. `chmod 777 cloudflared` dulu (lihat catatan di step 3), baru ulangi command yang gagal.
 - **cloudflared bilang `"cloudflared tunnel run" requires the ID or name of the tunnel ... or in the configuration file`** — `tunnel run` nggak otomatis nemu `config.yml` biarpun udah di-mount ke home directory yang bener. Compose file ini udah pakai `--config /home/nonroot/.cloudflared/config.yml` eksplisit buat ngehindarin ini; kalau masih muncul, cek command di `docker-compose.prod.yml` beneran ke-apply (`docker compose -f docker-compose.prod.yml up -d --build cloudflared` ulang).
 - **cloudflared bilang `lookup cfd-features.argotunnel.com on 127.0.0.11:53: server misbehaving` / `Couldn't resolve SRV record`** — ini soal DNS resolver di dalam container, bukan soal domain `nfab.my.id` kamu (domain Cloudflare sendiri yang gagal di-resolve). Biasanya karena resolver default Docker (`127.0.0.11`) nggak bisa nyampe ke upstream DNS host (sering kejadian kalau host pakai `systemd-resolved`). Compose file ini udah set `dns: [1.1.1.1, 1.0.0.1]` eksplisit buat service `cloudflared` buat ngehindarin ini — pastikan udah `git pull` versi terbaru, lalu `docker compose -f docker-compose.prod.yml up -d --build cloudflared`.
+- **Semua domain balik 404 meskipun tunnel udah connect dan DNS udah bener** — cek `docker compose -f docker-compose.prod.yml logs traefik`. Kalau isinya `Error response from daemon: client version 1.24 is too old`, berarti Traefik gagal connect ke Docker API-nya sama sekali (jadi dia nggak pernah "liat" container frontend/backend-nya, semua request jatuh ke 404 default). Docker Engine versi baru nolak API version lama yang coba dipakai Traefik secara default. Compose file ini udah set `DOCKER_API_VERSION=1.41` eksplisit di service `traefik` buat ngehindarin ini — `git pull` versi terbaru lalu `docker compose -f docker-compose.prod.yml up -d --build traefik`.
+- **Domain nggak resolve sama sekali di host (`curl: Could not resolve host`), padahal `dig @1.1.1.1` udah bener** — ini bukan soal propagasi/record, tapi resolver DNS default host-mu yang nggak ke-konfigurasi (`cat /etc/resolv.conf` nunjukin "No DNS servers known"). Set manual:
+  ```bash
+  sudo mkdir -p /etc/systemd/resolved.conf.d
+  sudo tee /etc/systemd/resolved.conf.d/dns.conf <<'EOF'
+  [Resolve]
+  DNS=1.1.1.1 1.0.0.1 8.8.8.8
+  FallbackDNS=8.8.8.8 1.1.1.1
+  EOF
+  sudo systemctl restart systemd-resolved
+  ```
 - **Backend crash-loop, log-nya `password authentication failed for user "portofolio"`** — image Postgres cuma nge-set password itu **sekali**, pas volume datanya pertama kali dibuat. Kalau kamu ubah `DB_PASSWORD` di `.env`/`backend/.env` SETELAH container `db` pernah jalan, password di dalam database nggak otomatis ikut berubah. Samain manual:
   ```bash
   docker compose -f docker-compose.prod.yml exec db psql -U portofolio -d portofolio -c "ALTER USER portofolio WITH PASSWORD 'isi_DB_PASSWORD_di_env_kamu';"
